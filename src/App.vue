@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, markRaw } from 'vue';
 import FeaturedPatterns from './components/FeaturedPatterns.vue';
+import { Loading } from '@element-plus/icons-vue';
 
 // 懒加载其他组件，减少初始加载时间
 const loadPatternGenerator = () => import('./components/PatternGenerator.vue');
@@ -76,7 +77,10 @@ const showFeaturedPatterns = () => {
   <div class="app-container">
     <!-- 顶部标题栏 -->
     <header class="app-header">
-      <h1>非遗香包图案生成系统</h1>
+      <div class="logo-container">
+        <img src="/d:/Project/robot/src/assets/logo_sachet.png" alt="Sachet Logo" class="app-logo" />
+        <h1 class="site-title">非遗香包图案生成系统</h1>
+      </div>
     </header>
     
     <!-- 主内容区域 -->
@@ -98,7 +102,7 @@ const showFeaturedPatterns = () => {
       <div class="content-display">
         <!-- 加载状态指示器 -->
         <div v-if="loading" class="loading-container">
-          <el-spinner size="large" />
+          <el-icon size="large"><Loading /></el-icon>
           <p>加载中...</p>
         </div>
         
@@ -150,8 +154,20 @@ html, body {
   text-align: center;
 }
 
-.app-header h1 {
-  font-size: 2rem;
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.app-logo {
+  height: 40px;
+  width: auto;
+}
+
+.site-title {
+  font-size: 1.8rem;
   font-weight: 700;
   margin: 0;
 }
@@ -292,8 +308,17 @@ html, body {
     padding: 1rem;
   }
   
-  .app-header h1 {
-    font-size: 1.5rem;
+  .logo-container {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .app-logo {
+    height: 30px;
+  }
+  
+  .site-title {
+    font-size: 1.3rem;
   }
 }
 

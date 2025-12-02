@@ -166,8 +166,39 @@ const startTransfer = async () => {
         target_style: targetStyle.value
       }
     });
-    // 假设API返回的是图片URL
-    transferredImage.value = result.image_url;
+    
+    // 从结果中提取图片URL - 处理多种可能的返回格式
+    let imageUrl = null;
+    
+    // 检查多种可能的响应格式
+    if (result && result.output && result.output.choices && result.output.choices[0] && 
+        result.output.choices[0].message && result.output.choices[0].message.content && 
+        result.output.choices[0].message.content[0] && result.output.choices[0].message.content[0].image) {
+      // dashscope multimodal conversation 格式
+      imageUrl = result.output.choices[0].message.content[0].image;
+      console.log('从output.choices提取的图片URL:', imageUrl);
+    } else if (result && result.data && result.data.image_url) {
+      // 标准URL格式
+      imageUrl = result.data.image_url;
+      console.log('从data.image_url提取的图片URL:', imageUrl);
+    } else if (result && result.image_url) {
+      // 直接的image_url格式
+      imageUrl = result.image_url;
+      console.log('从image_url提取的图片URL:', imageUrl);
+    } else if (result && result.data && result.data.imageData) {
+      // base64格式数据
+      imageUrl = result.data.imageData;
+      console.log('从data.imageData提取的base64图片:', imageUrl);
+    } else {
+      console.warn('无法识别的响应格式:', JSON.stringify(result));
+      throw new Error('API返回格式异常，无法提取图片');
+    }
+    
+    if (imageUrl) {
+      transferredImage.value = imageUrl;
+    } else {
+      throw new Error('无法从API响应中提取图片URL');
+    }
   } catch (error) {
     console.error('风格迁移失败:', error);
     // 这里可以添加错误提示
