@@ -78,7 +78,7 @@ const showFeaturedPatterns = () => {
     <!-- 顶部标题栏 -->
     <header class="app-header">
       <div class="logo-container">
-        <img src="/d:/Project/robot/src/assets/logo_sachet.png" alt="Sachet Logo" class="app-logo" />
+        <img src="/src/assets/logo_sachet.png" alt="Sachet Logo" class="app-logo" />
         <h1 class="site-title">非遗香包图案生成系统</h1>
       </div>
     </header>

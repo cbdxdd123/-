@@ -207,7 +207,6 @@ const generateInnovativePattern = async () => {
     
     // 构建请求参数
     let params = {
-      type: 'innovative_pattern',
       innovate_type: formData.value.innovateType,
       blend_ratio: formData.value.blendRatio,
       creativity: formData.value.creativity,
@@ -270,11 +269,35 @@ const generateInnovativePattern = async () => {
 };
 
 // 下载图片
-const downloadImage = () => {
-  if (generatedImage.value) {
+const downloadImage = async () => {
+  if (!generatedImage.value) return;
+  
+  try {
+    // 使用fetch获取图片数据
+    const response = await fetch(generatedImage.value);
+    if (!response.ok) throw new Error('网络请求失败');
+    
+    // 转换为blob
+    const blob = await response.blob();
+    
+    // 创建下载链接
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `创新图案_${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    
+    // 清理
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('下载失败:', error);
+    // 如果fetch方式失败，回退到原始方式
     const link = document.createElement('a');
     link.href = generatedImage.value;
-    link.download = `innovative-pattern-${Date.now()}.png`;
+    link.download = `创新图案_${Date.now()}.png`;
+    link.target = '_blank'; // 在新标签页打开，避免跨域问题
     link.click();
   }
 };

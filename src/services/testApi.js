@@ -51,7 +51,7 @@ const checkEnvironment = () => {
   });
   
   if (!apiKey || apiKey === 'your-api-key') {
-    console.warn('⚠️  警告: API密钥未配置或使用默认值，请在.env文件中设置VITE_DASHSCOPE_API_KEY');
+    console.warn('⚠️  警告: API密钥未配置或使用默认值，请在.env.local文件中设置VITE_DASHSCOPE_API_KEY');
     return false;
   }
   

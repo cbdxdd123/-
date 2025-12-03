@@ -5,6 +5,7 @@ import vue from '@vitejs/plugin-vue'
 export default defineConfig({
   plugins: [vue()],
   server: {
+    port: 5173,       // 明确指定端口
     proxy: {
       // 代理API请求到dashscope域名，解决CORS问题
       '/api/v1': {

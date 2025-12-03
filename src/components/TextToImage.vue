@@ -39,13 +39,13 @@
         </div>
         <div class="form-row">
           <div class="form-col">
-            <el-form-item label="图像比例">
-              <el-select v-model="formData.aspectRatio" placeholder="请选择图像比例" style="width: 100%">
-                <el-option label="1:1" value="1:1"></el-option>
-                <el-option label="4:3" value="4:3"></el-option>
-                <el-option label="3:4" value="3:4"></el-option>
-                <el-option label="16:9" value="16:9"></el-option>
-                <el-option label="9:16" value="9:16"></el-option>
+            <el-form-item label="图像尺寸">
+              <el-select v-model="formData.size" placeholder="请选择图像尺寸" style="width: 100%">
+                <el-option label="1664×928 (16:9)" value="1664*928"></el-option>
+                <el-option label="1472×1140 (4:3)" value="1472*1140"></el-option>
+                <el-option label="1328×1328 (1:1)" value="1328*1328"></el-option>
+                <el-option label="1140×1472 (3:4)" value="1140*1472"></el-option>
+                <el-option label="928×1664 (9:16)" value="928*1664"></el-option>
               </el-select>
             </el-form-item>
           </div>
@@ -55,15 +55,6 @@
             </el-form-item>
           </div>
         </div>
-        <el-form-item label="图像数量">
-          <el-slider
-            v-model="formData.imageCount"
-            :min="1"
-            :max="4"
-            show-input
-            :marks="{1: '1张', 2: '2张', 3: '3张', 4: '4张'}"
-          ></el-slider>
-        </el-form-item>
 
       </el-form>
       
@@ -88,7 +79,7 @@
             <el-descriptions :column="2" border>
               <el-descriptions-item label="风格">{{ getStyleName(formData.style) }}</el-descriptions-item>
               <el-descriptions-item label="质量">{{ formData.quality }}</el-descriptions-item>
-              <el-descriptions-item label="比例">{{ formData.aspectRatio }}</el-descriptions-item>
+              <el-descriptions-item label="尺寸">{{ formData.size }}</el-descriptions-item>
               <el-descriptions-item label="创意度">{{ formData.creativity }}</el-descriptions-item>
             </el-descriptions>
             <div class="result-actions">
@@ -112,7 +103,7 @@ const formData = ref({
   prompt: '',
   style: 'chinese_ink',
   quality: '高清',
-  aspectRatio: '1:1',
+  size: '1328*1328',
   creativity: 5
 });
 
@@ -138,15 +129,29 @@ const getStyleName = (style) => {
 const generateImage = async () => {
   try {
     loading.value = true;
+    
+    // 构建包含所有要求的完整提示词
+    const styleDescription = getStyleName(formData.value.style);
+    const qualityDescription = formData.value.quality === '标准' ? '标准质量' : 
+                              formData.value.quality === '高清' ? '高清质量，细节丰富' : 
+                              '超高清质量，细节极其丰富，4K分辨率';
+    const creativityDescription = formData.value.creativity <= 3 ? '创意度保守，保持传统风格' :
+                                 formData.value.creativity <= 7 ? '创意度平衡，传统与创新并重' :
+                                 '创意度激进，大胆创新，突破传统';
+    
+    // 构建完整提示词
+    const fullPrompt = `${formData.value.prompt}。风格要求：${styleDescription}。质量要求：${qualityDescription}。图像尺寸：${formData.value.size}。${creativityDescription}。请确保生成的图像精美、色彩和谐，适合作为香包设计。`;
+    
     // 调用API生成图像
     const result = await textToImage({
       type: 'text_to_image',
       params: {
-        prompt: formData.value.prompt,
+        prompt: fullPrompt,
         style: formData.value.style,
         quality: formData.value.quality,
-        aspect_ratio: formData.value.aspectRatio,
-        creativity: formData.value.creativity
+        size: formData.value.size,
+        creativity: formData.value.creativity,
+        prompt_extend: true  // 启用prompt_extend字段
       }
     });
     // 从结果中提取图片URL - 处理多种可能的返回格式
@@ -190,11 +195,35 @@ const generateImage = async () => {
 };
 
 // 下载图片
-const downloadImage = () => {
-  if (generatedImage.value) {
+const downloadImage = async () => {
+  if (!generatedImage.value) return;
+  
+  try {
+    // 使用fetch获取图片数据
+    const response = await fetch(generatedImage.value);
+    if (!response.ok) throw new Error('网络请求失败');
+    
+    // 转换为blob
+    const blob = await response.blob();
+    
+    // 创建下载链接
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `文本生成图像_${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    
+    // 清理
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('下载失败:', error);
+    // 如果fetch方式失败，回退到原始方式
     const link = document.createElement('a');
     link.href = generatedImage.value;
-    link.download = `text-image-${Date.now()}.png`;
+    link.download = `文本生成图像_${Date.now()}.png`;
+    link.target = '_blank'; // 在新标签页打开，避免跨域问题
     link.click();
   }
 };

@@ -13,7 +13,7 @@
         @click="showImagePreview(pattern.image)"
       >
         <div class="image-container">
-          <el-image :src="pattern.image" fit="cover" lazy></el-image>
+          <el-image :src="pattern.image" fit="contain" lazy></el-image>
           <div class="card-overlay">
             <span class="view-icon">👁️</span>
           </div>
@@ -37,44 +37,50 @@
 
 <script setup>
 import { ref } from 'vue';
+import flowerImage from '/src/assets/花卉香包.png';
+import crayonImage from '/src/assets/蜡笔小新.png';
+import ethnicImage from '/src/assets/民族风几何香包.png';
+import porcelainImage from '/src/assets/青花瓷风香包.png';
+import cyberpunkImage from '/src/assets/赛博朋克.png';
+import purpleImage from '/src/assets/紫色人物.png';
 
 // 精选图案数据（使用示例数据）
 const featuredPatterns = ref([
   {
-    title: '传统龙凤呈祥',
-    description: '融合中国传统龙凤元素的经典香包图案',
-    image: 'https://picsum.photos/id/1015/400/300',
-    tags: ['传统', '经典', '龙凤']
+    title: '花卉香包',
+    description: '精美花卉图案的香包设计，展现自然之美',
+    image: flowerImage,
+    tags: ['花卉', '自然', '精美']
   },
   {
-    title: '现代简约花卉',
-    description: '现代简约风格的花卉香包设计',
-    image: 'https://picsum.photos/id/1025/400/300',
-    tags: ['现代', '简约', '花卉']
+    title: '蜡笔小新风',
+    description: '卡通风格的蜡笔小新主题香包，充满童趣',
+    image: crayonImage,
+    tags: ['卡通', '童趣', '创意']
   },
   {
-    title: '民族风几何纹样',
-    description: '少数民族特色的几何纹样香包',
-    image: 'https://picsum.photos/id/1035/400/300',
+    title: '民族风几何',
+    description: '少数民族特色的几何纹样香包，传统与现代结合',
+    image: ethnicImage,
     tags: ['民族风', '几何', '传统']
   },
   {
-    title: '古典青花瓷风',
-    description: '融合青花瓷元素的典雅香包图案',
-    image: 'https://picsum.photos/id/1045/400/300',
-    tags: ['青花瓷', '典雅', '传统']
+    title: '青花瓷风韵',
+    description: '融合青花瓷元素的典雅香包图案，展现东方美学',
+    image: porcelainImage,
+    tags: ['青花瓷', '典雅', '东方美学']
   },
   {
-    title: '未来主义创新',
-    description: '结合传统元素与未来主义风格的创新设计',
-    image: 'https://picsum.photos/id/1055/400/300',
-    tags: ['创新', '未来主义', '融合']
+    title: '赛博朋克',
+    description: '未来科技感的赛博朋克风格香包，前卫时尚',
+    image: cyberpunkImage,
+    tags: ['科技感', '前卫', '未来']
   },
   {
-    title: '东方韵味花鸟',
-    description: '东方传统花鸟纹样的精美香包设计',
-    image: 'https://picsum.photos/id/1065/400/300',
-    tags: ['花鸟', '东方', '传统']
+    title: '紫色人物',
+    description: '神秘紫色调的人物主题香包，艺术感十足',
+    image: purpleImage,
+    tags: ['紫色', '人物', '艺术']
   }
 ]);
 
@@ -162,14 +168,19 @@ const showImagePreview = (imageUrl) => {
 .image-container {
   position: relative;
   width: 100%;
-  height: 200px;
+  height: 300px;
   overflow: hidden;
+  background-color: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .image-container img {
-  width: 100%;
-  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   transition: transform 0.5s ease;
+  object-fit: contain;
 }
 
 .pattern-card:hover .image-container img {

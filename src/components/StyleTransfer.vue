@@ -55,21 +55,6 @@
           <el-option label="赛博朋克" value="cyberpunk"></el-option>
           <el-option label="蒸汽波" value="vaporwave"></el-option>
         </el-select>
-        <div class="style-presets" v-if="targetStyle">
-          <h4>风格预览</h4>
-          <div class="preset-images">
-            <div
-              v-for="(preset, index) in stylePresets"
-              :key="index"
-              class="preset-item"
-              :class="{ active: preset.style === targetStyle }"
-              @click="targetStyle = preset.style"
-            >
-              <el-image :src="preset.preview" fit="cover"></el-image>
-              <span>{{ preset.name }}</span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -118,23 +103,13 @@ const targetStyle = ref('');
 const transferredImage = ref('');
 const loading = ref(false);
 
-// 风格预设
-const stylePresets = ref([
-  { style: 'classical_oil', name: '古典油画', preview: 'https://picsum.photos/id/101/200/200' },
-  { style: 'watercolor', name: '水彩画', preview: 'https://picsum.photos/id/102/200/200' },
-  { style: 'chinese_ink', name: '水墨画', preview: 'https://picsum.photos/id/103/200/200' },
-  { style: 'van_gogh', name: '梵高风格', preview: 'https://picsum.photos/id/104/200/200' },
-  { style: 'picasso', name: '毕加索风格', preview: 'https://picsum.photos/id/105/200/200' },
-  { style: 'pop_art', name: '波普艺术', preview: 'https://picsum.photos/id/106/200/200' },
-  { style: 'cyberpunk', name: '赛博朋克', preview: 'https://picsum.photos/id/107/200/200' },
-  { style: 'vaporwave', name: '蒸汽波', preview: 'https://picsum.photos/id/108/200/200' }
-]);
-
 const handleFileChange = (file) => {
-  // 将文件转换为URL
+  // 将文件转换为base64格式
   const reader = new FileReader();
   reader.onload = (e) => {
-    file.url = e.target.result;
+    // 保存base64数据
+    file.base64 = e.target.result;
+    file.url = e.target.result; // 同时设置url用于显示
     selectedFile.value = file;
   };
   reader.readAsDataURL(file.raw);
@@ -158,11 +133,10 @@ const handleRemove = (file) => {
 const startTransfer = async () => {
   try {
     loading.value = true;
-    // 调用API进行风格迁移
+    // 调用API进行风格迁移 - 不再传递图像数据，只传递风格选择
     const result = await styleTransfer({
       type: 'style_transfer',
       params: {
-        image: selectedFile.value.url, // 实际使用时需要转换为base64或上传文件
         target_style: targetStyle.value
       }
     });
@@ -207,11 +181,35 @@ const startTransfer = async () => {
   }
 };
 
-const downloadImage = () => {
-  if (transferredImage.value) {
+const downloadImage = async () => {
+  if (!transferredImage.value) return;
+  
+  try {
+    // 使用fetch获取图片数据
+    const response = await fetch(transferredImage.value);
+    if (!response.ok) throw new Error('网络请求失败');
+    
+    // 转换为blob
+    const blob = await response.blob();
+    
+    // 创建下载链接
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `风格迁移_${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    
+    // 清理
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('下载失败:', error);
+    // 如果fetch方式失败，回退到原始方式
     const link = document.createElement('a');
     link.href = transferredImage.value;
-    link.download = `style-transfer-${Date.now()}.png`;
+    link.download = `风格迁移_${Date.now()}.png`;
+    link.target = '_blank'; // 在新标签页打开，避免跨域问题
     link.click();
   }
 };
@@ -268,55 +266,6 @@ const restartTransfer = () => {
   max-width: 800px;
   margin: 20px auto 0;
   text-align: center;
-}
-
-.style-presets {
-  margin-top: 20px;
-  text-align: center;
-}
-
-.preset-images {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 15px;
-  margin-top: 15px;
-  justify-content: center;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.preset-item {
-  width: 100px;
-  cursor: pointer;
-  border: 2px solid transparent;
-  border-radius: 4px;
-  transition: all 0.3s;
-  margin: 0 auto;
-}
-
-.preset-item:hover {
-  transform: scale(1.05);
-}
-
-.preset-item.active {
-  border-color: #409eff;
-}
-
-.preset-item img {
-  width: 100%;
-  height: 80px;
-  border-radius: 4px;
-}
-
-.preset-item span {
-  display: block;
-  text-align: center;
-  font-size: 12px;
-  margin-top: 5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .result-section {
