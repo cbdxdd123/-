@@ -71,7 +71,7 @@
     </div>
 
     <div class="result-section" v-if="transferredImage">
-      <h3>迁移结果</h3>
+      <h3>展示迁移结果</h3>
       <div class="results-container">
         <div class="result-item">
           <h4>原始图像</h4>
@@ -133,12 +133,14 @@ const handleRemove = (file) => {
 const startTransfer = async () => {
   try {
     loading.value = true;
-    // 调用API进行风格迁移 - 不再传递图像数据，只传递风格选择
+    
+    // 调用API进行风格迁移 - 传递图像文件和风格选择
     const result = await styleTransfer({
       type: 'style_transfer',
       params: {
         target_style: targetStyle.value
-      }
+      },
+      imageFile: selectedFile.value // 传递上传的图像文件
     });
     
     // 从结果中提取图片URL - 处理多种可能的返回格式

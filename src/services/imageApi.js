@@ -620,7 +620,7 @@ export async function describeImage({ image }) {
   }
 }
 // 风格迁移函数
-export async function styleTransfer({ type, params }) {
+export async function styleTransfer({ type, params, imageFile }) {
   try {
     console.log('🎨 开始风格迁移...');
     
@@ -630,90 +630,131 @@ export async function styleTransfer({ type, params }) {
       throw new Error('API密钥未配置，请在.env.local文件中设置VITE_DASHSCOPE_API_KEY');
     }
     
+    // 检查是否有上传的图像
+    if (!imageFile || !imageFile.base64) {
+      throw new Error('请上传一张图像进行风格迁移');
+    }
+    
     // 构建风格描述
     let styleDescription = '';
     switch(params.target_style) {
       case 'classical_oil':
-        styleDescription = '古典油画风格，具有丰富的色彩层次和笔触感';
+        styleDescription = '将图像转换为古典油画风格，具有丰富的色彩层次和笔触感';
         break;
       case 'watercolor':
-        styleDescription = '水彩画风格，色彩透明柔和，具有流动感';
+        styleDescription = '将图像转换为水彩画风格，色彩透明柔和，具有流动感';
         break;
       case 'chinese_ink':
-        styleDescription = '中国传统水墨画风格，黑白分明，意境深远';
+        styleDescription = '将图像转换为中国传统水墨画风格，黑白分明，意境深远';
         break;
       case 'van_gogh':
-        styleDescription = '梵高风格，具有独特的笔触和色彩表现力';
+        styleDescription = '将图像转换为梵高风格，具有独特的笔触和色彩表现力';
         break;
       case 'picasso':
-        styleDescription = '毕加索立体主义风格，几何形状和抽象表现';
+        styleDescription = '将图像转换为毕加索立体主义风格，几何形状和抽象表现';
         break;
       case 'pop_art':
-        styleDescription = '波普艺术风格，色彩鲜明，具有大众文化元素';
+        styleDescription = '将图像转换为波普艺术风格，色彩鲜明，具有大众文化元素';
         break;
       case 'cyberpunk':
-        styleDescription = '赛博朋克风格，未来科技感，霓虹色彩';
+        styleDescription = '将图像转换为赛博朋克风格，未来科技感，霓虹色彩';
         break;
       case 'vaporwave':
-        styleDescription = '蒸汽波风格，复古未来主义，粉紫色调';
+        styleDescription = '将图像转换为蒸汽波风格，复古未来主义，粉紫色调';
         break;
       default:
-        styleDescription = '艺术风格转换';
+        styleDescription = '将图像转换为艺术风格';
     }
     
-    // 构建请求体 - 使用文本描述而不是图像
-    const requestBody = {
-      model: 'qwen-image-plus',
+    // 确保图像格式正确 - 直接使用完整的base64数据
+    let imageData = imageFile.base64;
+    
+    // 如果不是以data:开头，则添加data:image/...;base64,前缀
+    if (!imageData.startsWith('data:')) {
+      // 尝试从文件名中获取MIME类型
+      let mimeType = 'image/jpeg'; // 默认MIME类型
+      if (imageFile.raw && imageFile.raw.type) {
+        mimeType = imageFile.raw.type;
+      } else if (imageFile.name) {
+        const extension = imageFile.name.split('.').pop().toLowerCase();
+        switch(extension) {
+          case 'png':
+            mimeType = 'image/png';
+            break;
+          case 'jpg':
+          case 'jpeg':
+            mimeType = 'image/jpeg';
+            break;
+          case 'webp':
+            mimeType = 'image/webp';
+            break;
+        }
+      }
+      imageData = `data:${mimeType};base64,${imageData}`;
+    }
+    
+    console.log('🖼️ 图像数据格式检查:', {
+      hasBase64: !!imageData,
+      startsWithData: imageData.startsWith('data:'),
+      length: imageData.length,
+      preview: imageData.substring(0, 50) + '...'
+    });
+    
+    // 使用qwen-image-edit-plus模型编辑图像
+    const editRequestBody = {
+      model: 'qwen-image-edit-plus',
       input: {
         messages: [
           {
             role: 'user',
             content: [
               {
-                text: `请将图像转换为${styleDescription}。保持图像的主体内容和构图不变，只改变艺术风格。请确保生成的图像精美、色彩和谐，适合作为香包设计。`
+                image: imageData // 使用完整的base64数据
+              },
+              {
+                text: styleDescription
               }
             ]
           }
         ]
       },
       parameters: {
-        size: '1328*1328',
-        negative_prompt: '',
+        n: 1,
+        negative_prompt: "",
         prompt_extend: true,
         watermark: false
       }
     };
     
-    console.log('📤 发送风格迁移请求...', {
-      model: requestBody.model,
+    console.log('📤 发送图像编辑请求...', {
+      model: editRequestBody.model,
       target_style: params.target_style,
       style_description: styleDescription,
-      size: requestBody.parameters.size
+      has_image: !!imageFile
     });
     
-    // 发送POST请求到API端点
-    const response = await apiClient.post('/services/aigc/multimodal-generation/generation', requestBody);
+    // 发送图像编辑请求
+    const response = await apiClient.post('/services/aigc/multimodal-generation/generation', editRequestBody);
     
-    console.log('📥 风格迁移请求成功，响应状态:', response.status);
+    console.log('📥 图像编辑请求成功，响应状态:', response.status);
     
     // 处理响应
     if (response.data && response.data.output && response.data.output.choices) {
       const choices = response.data.output.choices;
       
       if (choices.length > 0 && choices[0].message && choices[0].message.content) {
-        const content = choices[0].message.content[0];
+        const content = choices[0].message.content;
         
-        if (content.image) {
-          console.log('✅ 提取风格迁移后的图像URL');
-          response.data.data = response.data.data || {};
-          response.data.data.image_url = content.image;
-          return response.data;
-        } else if (content.base64) {
-          console.log('✅ 提取风格迁移后的base64图像数据');
-          const imageData = `data:image/png;base64,${content.base64}`;
-          response.data.data = response.data.data || {};
-          response.data.data.imageData = imageData;
-          return response.data;
+        // 处理可能的多个图像返回
+        if (Array.isArray(content) && content.length > 0) {
+          for (const item of content) {
+            if (item.image) {
+              console.log('✅ 提取风格迁移后的图像URL');
+              response.data.data = response.data.data || {};
+              response.data.data.image_url = item.image;
+              return response.data;
+            }
+          }
         }
       }
     }

@@ -14,8 +14,8 @@ export default defineConfig({
         secure: true,
         rewrite: (path) => path.replace(/^\/api\/v1/, '/api/v1'),
         // 添加必要的CORS头部
-        configure: (proxy, options) => {
-          proxy.on('proxyRes', (proxyRes, req, res) => {
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes) => {
             // 添加CORS头部
             proxyRes.headers['Access-Control-Allow-Origin'] = '*';
             proxyRes.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,PATCH,OPTIONS';
